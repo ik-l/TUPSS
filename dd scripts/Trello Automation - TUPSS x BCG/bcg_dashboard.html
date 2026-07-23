@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BCG Compliance Dashboard - TUPSS</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f4f3ee; color: #1a1a1a; padding: 2rem; }
+
+  /* Header */
+  .hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
+  .hdr h1 { font-size: 18px; font-weight: 600; }
+  .hdr-ts { font-size: 12px; color: #888; }
+  .hdr-ts strong { color: #1a1a1a; font-weight: 600; }
+  .sec { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #888; margin-bottom: 8px; }
+
+  /* Banners */
+  .cert-banner        { display:none; background:#fff7ed; border:1px solid #fdba74; border-left:4px solid #f97316; border-radius:8px; padding:0.6rem 1rem; margin-bottom:1.25rem; font-size:12px; color:#9a3412; }
+  .cert-banner strong { color:#7c2d12; }
+  .cert-banner.done   { background:#f0fdf4; border-color:#86efac; border-left-color:#22c55e; color:#166534; }
+  .cert-banner.done strong { color:#14532d; }
+  .priority-inline    { font-size:12px; color:#555; line-height:1.6; margin-bottom:1.25rem; padding:0.6rem 0.75rem; background:#eff6ff; border-left:3px solid #2563eb; border-radius:0 6px 6px 0; }
+
+  /* Metric cards (Combined Totals + Last Update Summary + Detailed Summary) */
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 1.25rem; }
+  .grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 1.25rem; }
+  .fc { background: #f0efe8; border-radius: 8px; padding: 0.7rem 0.85rem; }
+  .fc-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: #888; margin-bottom: 4px; }
+  .fc-value { font-size: 16px; font-weight: 600; color: #1a1a1a; margin-bottom: 2px; }
+  .fc-value.lg { font-size: 20px; }
+  .fc-sub   { font-size: 10px; color: #888; line-height: 1.6; }
+
+  /* Badges */
+  .badge  { font-size: 10px; padding: 1px 7px; border-radius: 99px; font-weight: 600; }
+  .b-ok     { background: #dcfce7; color: #166534; }
+  .b-warn   { background: #fef9c3; color: #854d0e; }
+  .b-danger { background: #fee2e2; color: #991b1b; }
+
+  /* Two-column section */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.25rem; align-items: start; }
+
+  /* By Center */
+  .centers { display: flex; flex-direction: column; gap: 7px; }
+  .cc { background: #fff; border: 1px solid #e5e3dc; border-radius: 10px; padding: 0.75rem 1rem; }
+  .cc-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .cc-name { font-size: 13px; font-weight: 600; }
+  .cc-right { display: flex; align-items: center; gap: 8px; }
+  .cc-pct { font-size: 13px; font-weight: 600; color: #2563eb; }
+  .bar-track { background: #eee; border-radius: 99px; height: 5px; margin-bottom: 6px; overflow: hidden; }
+  .bar-fill  { height: 100%; border-radius: 99px; background: #2563eb; }
+  .cc-meta { display: flex; gap: 14px; flex-wrap: wrap; }
+  .mi { font-size: 11px; color: #888; }
+  .mi span { color: #1a1a1a; font-weight: 600; }
+
+  /* Period Changelog */
+  .combo { background: #fff; border: 1px solid #e5e3dc; border-radius: 10px; overflow: hidden; }
+  .cl-row { border-top: 1px solid #f0efe8; padding: 0.55rem 1rem; }
+  .cl-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+  .cl-name { font-size: 12px; font-weight: 600; }
+  .cl-pct  { font-size: 12px; font-weight: 600; color: #2563eb; }
+  .cl-pills { display: flex; gap: 5px; flex-wrap: wrap; }
+  .pill { font-size: 10px; padding: 2px 8px; border-radius: 99px; font-weight: 600; }
+  .pill-up      { background:#dcfce7; color:#166534; }
+  .pill-flat    { background:#f0efe8; color:#888; }
+  .pill-down    { background:#fee2e2; color:#991b1b; }
+  .pill-missing { background:#fff1f2; color:#be123c; }
+  .ts-note { font-size: 10px; color: #aaa; padding: 5px 1rem 0.5rem; border-top: 1px solid #f0efe8; }
+
+  .divider { height: 1px; background: #e5e3dc; margin: 1rem 0; }
+  .d-up   { color: #166534; font-weight: 600; }
+  .d-down { color: #991b1b; font-weight: 600; }
+  .d-flat { color: #aaa; }
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <h1>BCG Compliance Dashboard</h1>
+  <span class="hdr-ts">Last updated: <strong id="headerTimestamp"></strong></span>
+</div>
+
+<div id="certBanner" class="cert-banner"></div>
+<div id="priorityBanner"></div>
+
+<p class="sec">Combined Totals</p>
+<div class="grid-4" id="totals"></div>
+
+<div class="two-col">
+  <div>
+    <p class="sec">By Center</p>
+    <div class="centers" id="centers"></div>
+  </div>
+  <div>
+    <p class="sec">Period Changelog</p>
+    <div class="combo" id="combo"></div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<p class="sec">Last Update Summary</p>
+<div class="grid-4" id="footerStats"></div>
+
+<div class="divider"></div>
+
+<p class="sec">Detailed Change Summary — By Center</p>
+<div class="grid-5" id="detailSummary"></div>
+
+<script>
+const CENTERS = [
+  { store:'7',    label:'Center 7',    pmb:383, bcg:336, cards:17, cardId:'6a1faa79677d65ad42f436e1', itemId:'6a1faa7a677d65ad42f4371c' },
+  { store:'3606', label:'Center 3606', pmb:742, bcg:756, cards:25, cardId:'6a1fadaa06ba961514ded7e1', itemId:'6a1fadaa06ba961514ded81c' },
+  { store:'6822', label:'Center 6822', pmb:211, bcg:203, cards:6,  cardId:'6a1e3f55d3b5367023f00612', itemId:'6a1e3f55d3b5367023f0064b' },
+  { store:'6964', label:'Center 6964', pmb:218, bcg:215, cards:11, cardId:'6a1fa76ddc47ca7e49878d34', itemId:'6a1fa76ddc47ca7e49878d6f' },
+  { store:'7177', label:'Center 7177', pmb:421, bcg:372, cards:8,  cardId:'6a1fa5eb339ee1fcf2112488', itemId:'6a1fa5eb339ee1fcf21124c3' },
+];
+
+function bc(pct) { return pct >= 95 ? 'b-ok' : pct >= 85 ? 'b-warn' : 'b-danger'; }
+function bl(pct) { return pct >= 95 ? 'on track' : pct >= 85 ? 'behind' : 'needs attention'; }
+function fmt(d)  {
+  return d.toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'}) + ' ' +
+         d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+}
+
+function renderTotals() {
+  const totalP = CENTERS.reduce((s,c) => s+c.pmb, 0);
+  const totalB = CENTERS.reduce((s,c) => s+c.bcg, 0);
+  const totalC = CENTERS.reduce((s,c) => s+c.cards, 0);
+  const pct    = (totalB/totalP*100).toFixed(1);
+  document.getElementById('totals').innerHTML = `
+    <div class="fc"><div class="fc-label">Total Mailboxes</div><div class="fc-value lg">${totalP.toLocaleString()}</div></div>
+    <div class="fc"><div class="fc-label">PS1583s In BCG</div><div class="fc-value lg">${totalB.toLocaleString()}</div><div class="fc-sub">${pct}% complete</div></div>
+    <div class="fc"><div class="fc-label">PS1583s Missing</div><div class="fc-value lg" style="color:#991b1b">${totalP-totalB}</div></div>
+    <div class="fc"><div class="fc-label">Cards On File</div><div class="fc-value lg">${totalC}</div><div class="fc-sub">${(totalC/totalP*100).toFixed(1)}% of all PMBs</div></div>
+  `;
+}
+
+function renderCenters() {
+  document.getElementById('centers').innerHTML = CENTERS.map(c => {
+    const pct     = (c.bcg/c.pmb*100).toFixed(1);
+    const missing = c.pmb - c.bcg;
+    const cardPct = (c.cards/c.pmb*100).toFixed(1);
+    return `<div class="cc">
+      <div class="cc-top">
+        <span class="cc-name">${c.label}</span>
+        <div class="cc-right"><span class="cc-pct">${pct}%</span><span class="badge ${bc(parseFloat(pct))}">${bl(parseFloat(pct))}</span></div>
+      </div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+      <div class="cc-meta">
+        <div class="mi">PMBs <span>${c.pmb}</span></div>
+        <div class="mi">BCG <span>${c.bcg}</span></div>
+        <div class="mi">Missing <span>${missing}</span></div>
+        <div class="mi">Cards <span>${c.cards} (${cardPct}%)</span></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderAll(snapshot, prevDate, now) {
+  const totalP    = CENTERS.reduce((s,c) => s+c.pmb, 0);
+  const newTotalB = CENTERS.reduce((s,c) => s+c.bcg, 0);
+  const oldTotalB = snapshot.reduce((s,v) => s+v, 0);
+  const diff      = newTotalB - oldTotalB;
+  const newPct    = (newTotalB/totalP*100).toFixed(1);
+  const oldPct    = (oldTotalB/totalP*100).toFixed(1);
+  const totalC    = CENTERS.reduce((s,c) => s+c.cards, 0);
+  const daysSince = Math.round((now - prevDate) / (1000*60*60*24));
+
+  document.getElementById('headerTimestamp').textContent = fmt(now);
+
+  // ── Priority banner ──────────────────────────────────────────
+  const byMissing = [...CENTERS].map(c => ({...c, missing:c.pmb-c.bcg})).sort((a,b) => b.missing-a.missing);
+  document.getElementById('priorityBanner').innerHTML =
+    `<div class="priority-inline"><strong>Priority:</strong> ${byMissing[0].label} (${byMissing[0].missing} missing) and ${byMissing[1].label} (${byMissing[1].missing} missing) account for ${byMissing[0].missing+byMissing[1].missing} of ${totalP-newTotalB} outstanding PS1583s — focus here. Cards on file at ${(totalC/totalP*100).toFixed(1)}% — consider reminding leadership regarding this.</div>`;
+
+  // ── Period Changelog ─────────────────────────────────────────
+  document.getElementById('combo').innerHTML = CENTERS.map((c,i) => {
+    const d   = c.bcg - snapshot[i];
+    const pct = (c.bcg/c.pmb*100).toFixed(1);
+    const pillCls = d > 0 ? 'pill-up' : d < 0 ? 'pill-down' : 'pill-flat';
+    const pillLbl = d > 0 ? `+${d} uploaded` : d < 0 ? `${d} removed` : 'no change';
+    const dCls    = d > 0 ? 'd-up' : d < 0 ? 'd-down' : 'd-flat';
+    return `<div class="cl-row">
+      <div class="cl-top">
+        <span class="cl-name">${c.label}</span>
+        <span class="cl-pct">${pct}% <span class="badge ${bc(parseFloat(pct))}" style="margin-left:4px">${bl(parseFloat(pct))}</span></span>
+      </div>
+      <div class="cl-pills">
+        <span class="pill ${pillCls}">${pillLbl} <span class="${dCls}">(${snapshot[i]}→${c.bcg})</span></span>
+        <span class="pill pill-missing">${c.pmb-c.bcg} missing</span>
+      </div>
+    </div>`;
+  }).join('') + `<p class="ts-note">vs. ${fmt(prevDate)}</p>`;
+
+  // ── Last Update Summary ──────────────────────────────────────
+  const improved  = CENTERS.filter((c,i) => c.bcg > snapshot[i]);
+  const flat      = CENTERS.filter((c,i) => c.bcg === snapshot[i]);
+  const declined  = CENTERS.filter((c,i) => c.bcg < snapshot[i]);
+  const bestPct   = Math.max(...CENTERS.map(c => c.bcg/c.pmb*100));
+  const bestCenter= CENTERS.find(c => (c.bcg/c.pmb*100) === bestPct);
+
+  document.getElementById('footerStats').innerHTML = `
+    <div class="fc">
+      <div class="fc-label">Period Activity</div>
+      <div class="fc-value" style="color:${diff>=0?'#166534':'#991b1b'}">${diff>=0?'+':''}${diff} PS1583s</div>
+      <div class="fc-sub">${oldPct}% → ${newPct}% &nbsp;·&nbsp; ${daysSince} day${daysSince!==1?'s':''} since last update</div>
+      <div class="fc-sub">
+        ${improved.length?`<span style="color:#166534">▲ ${improved.map(c=>c.label).join(', ')}</span>`:''}
+        ${improved.length&&flat.length?' · ':''}
+        ${flat.length?`<span style="color:#aaa">— ${flat.map(c=>c.label).join(', ')}</span>`:''}
+        ${declined.length?` · <span style="color:#991b1b">▼ ${declined.map(c=>c.label).join(', ')}</span>`:''}
+      </div>
+    </div>
+    <div class="fc">
+      <div class="fc-label">Needs Attention</div>
+      <div class="fc-value" style="color:#991b1b">${byMissing[0].label}</div>
+      <div class="fc-sub">${byMissing[0].missing} missing &nbsp;·&nbsp; ${(byMissing[0].bcg/byMissing[0].pmb*100).toFixed(1)}%</div>
+      <div class="fc-sub">${byMissing[1].label}: ${byMissing[1].missing} missing</div>
+    </div>
+    <div class="fc">
+      <div class="fc-label">Overall Completion</div>
+      <div class="fc-value">${newPct}%</div>
+      <div class="fc-sub">${newTotalB.toLocaleString()} in BCG &nbsp;·&nbsp; ${totalP-newTotalB} needed</div>
+      <div class="fc-sub">Best: ${bestCenter.label} at ${bestPct.toFixed(1)}%</div>
+    </div>
+    <div class="fc">
+      <div class="fc-label">Cards On File</div>
+      <div class="fc-value">${totalC}</div>
+      <div class="fc-sub">${(totalC/totalP*100).toFixed(1)}% of all PMBs</div>
+      <div class="fc-sub">${totalP-totalC} holders without a card</div>
+    </div>
+  `;
+
+  // ── Detailed Change Summary (fc-style, one card per center) ──
+  document.getElementById('detailSummary').innerHTML = CENTERS.map((c,i) => {
+    const d       = c.bcg - snapshot[i];
+    const pct     = (c.bcg/c.pmb*100).toFixed(1);
+    const missing = c.pmb - c.bcg;
+    const dColor  = d > 0 ? '#166534' : d < 0 ? '#991b1b' : '#888';
+    const dLabel  = d > 0 ? `+${d} PS1583s uploaded` : d < 0 ? `${d} PS1583s removed` : 'No BCG change';
+    return `<div class="fc">
+      <div class="fc-label">${c.label}</div>
+      <div class="fc-value" style="color:${dColor}">${dLabel}</div>
+      <div class="fc-sub">${snapshot[i]} → <strong>${c.bcg}</strong> in BCG</div>
+      <div class="fc-sub">${missing} missing &nbsp;·&nbsp; ${pct}% <span class="badge ${bc(parseFloat(pct))}" style="vertical-align:middle;margin-left:2px">${bl(parseFloat(pct))}</span></div>
+      <div class="fc-sub">${c.cards} cards on file (${(c.cards/c.pmb*100).toFixed(1)}%)</div>
+    </div>`;
+  }).join('');
+}
+
+// ── SET THIS EACH MONTH ──────────────────────────────────────
+// true  = all centers certified → green banner
+// false = window open → orange countdown
+const CERTIFIED = true;
+// ─────────────────────────────────────────────────────────────
+
+(function() {
+  const now    = new Date();
+  const day    = now.getDate();
+  const banner = document.getElementById('certBanner');
+  const month  = now.toLocaleDateString('en-US',{month:'long'});
+  if (CERTIFIED) {
+    banner.style.display = 'block';
+    banner.classList.add('done');
+    banner.innerHTML = `<strong>✓ All centers certified</strong> — BCG quarterly review complete for <strong>${month}</strong>.`;
+  } else if (day >= 1 && day <= 15) {
+    banner.style.display = 'block';
+    const left = 15 - day;
+    banner.innerHTML = `<strong>Full review window open</strong> — Certify in BCG by <strong>${month} 15</strong>. ${left===0?'<strong>Due today.</strong>':`<strong>${left} day${left!==1?'s':''} remaining.</strong>`}`;
+  }
+})();
+
+renderTotals();
+renderCenters();
+
+const lastSnapshot = [336, 756, 203, 215, 372];
+const lastUpdate   = new Date('2026-07-13T09:00:00');
+const thisUpdate   = new Date('2026-07-15T10:53:39');
+renderAll(lastSnapshot, lastUpdate, thisUpdate);
+</script>
+</body>
+</html>

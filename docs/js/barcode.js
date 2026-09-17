@@ -100,6 +100,8 @@ async function lookupBarcode(barcode) {
     basis: calories.basis, // 'serving' | '100g' | 'unknown' - shown to user so they know to adjust
     brand: p.brands || '',
     imageUrl: p.image_front_small_url || p.image_small_url || null,
+    nutriscore: (p.nutriscore_grade || '').toUpperCase() || null, // 'A'..'E'
+    nova: p.nova_group || null, // 1..4 (higher = more processed)
   };
 }
 

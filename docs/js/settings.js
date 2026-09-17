@@ -106,6 +106,19 @@ function wireSettingsForm(onSaved) {
     onSaved && onSaved();
   });
 
+  document.getElementById('btn-export-nutrition').addEventListener('click', () => {
+    const count = CSV.exportNutritionCSV();
+    UI.showToast(count ? `Downloaded ${count} food log entries.` : 'No food entries logged yet.');
+  });
+  document.getElementById('btn-export-weight').addEventListener('click', () => {
+    const count = CSV.exportMeasurementCSV();
+    UI.showToast(count ? `Downloaded ${count} weight entries.` : 'No weight entries logged yet.');
+  });
+  document.getElementById('btn-export-daily').addEventListener('click', () => {
+    const count = CSV.exportDailyExtrasCSV();
+    UI.showToast(count ? `Downloaded ${count} days of steps/water data.` : 'No steps/water data logged yet.');
+  });
+
   document.getElementById('btn-import-csv').addEventListener('click', () => {
     const statusEl = document.getElementById('import-status');
     const nText = document.getElementById('import-nutrition-csv').value.trim();

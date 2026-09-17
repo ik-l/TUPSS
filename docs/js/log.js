@@ -2,8 +2,10 @@ import { Store } from './state.js';
 import { Swaps } from './swaps.js';
 import { Photos } from './photos.js';
 import { Barcode } from './barcode.js';
+import { Quality } from './quality.js';
 
 let pendingPhotoFile = null;
+let pendingScanMeta = null; // { nutriscore, nova } from the last barcode lookup, cleared on form reset/edit
 
 function fields() {
   return {
@@ -29,8 +31,16 @@ function fillForm(data) {
   if (data.fat != null) f.fat.value = data.fat;
   if (data.sodium != null) f.sodium.value = data.sodium;
   if (data.sugar != null) f.sugar.value = data.sugar;
+  pendingScanMeta = (data.nutriscore || data.nova) ? { nutriscore: data.nutriscore, nova: data.nova } : null;
+  renderScanBadge();
   checkSwapSuggestion();
   checkAlertPreview();
+}
+
+function renderScanBadge() {
+  const badge = document.getElementById('scan-quality-badge');
+  if (!badge) return;
+  badge.innerHTML = pendingScanMeta ? Quality.chipsHtml(pendingScanMeta.nutriscore, pendingScanMeta.nova) : '';
 }
 
 function checkSwapSuggestion() {
@@ -68,6 +78,8 @@ function resetForm() {
   document.getElementById('swap-banner').classList.add('hidden');
   document.getElementById('alert-banner').classList.add('hidden');
   pendingPhotoFile = null;
+  pendingScanMeta = null;
+  renderScanBadge();
 }
 
 async function handleSubmit(e, onSaved) {
@@ -95,6 +107,9 @@ async function handleSubmit(e, onSaved) {
     sodium: f.sodium.value,
     sugar: f.sugar.value,
     photoId,
+    nutriscore: pendingScanMeta ? pendingScanMeta.nutriscore : null,
+    nova: pendingScanMeta ? pendingScanMeta.nova : null,
+    source: pendingScanMeta ? 'barcode' : 'manual',
   };
 
   Store.addEntry(data);

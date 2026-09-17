@@ -1,5 +1,7 @@
 import { Store } from './state.js';
 
+let currentRange = 7;
+
 function lastNDates(n) {
   const dates = [];
   const today = new Date();
@@ -43,8 +45,9 @@ function drawCaloriesBarChart(canvas, dates, calorieTotals, target) {
   ctx.fillText(`Target ${target}`, padding.left + w - 68, targetY - 6);
 
   // bars
-  const barGap = 10;
+  const barGap = dates.length > 14 ? 2 : 10;
   const barWidth = (w - barGap * (dates.length - 1)) / dates.length;
+  const labelEvery = barWidth < 18 ? Math.ceil(dates.length / 8) : 1;
   dates.forEach((dateStr, i) => {
     const val = calorieTotals[i];
     const x = padding.left + i * (barWidth + barGap);
@@ -52,16 +55,30 @@ function drawCaloriesBarChart(canvas, dates, calorieTotals, target) {
     ctx.fillStyle = val > target ? '#dc2626' : '#2563eb';
     ctx.fillRect(x, barTop, barWidth, padding.top + h - barTop);
 
-    ctx.fillStyle = textColor;
-    ctx.font = '10px sans-serif';
-    const [, m, d] = dateStr.split('-');
-    ctx.fillText(`${m}/${d}`, x + barWidth / 2 - 10, cssHeight - 6);
+    if (i % labelEvery === 0) {
+      ctx.fillStyle = textColor;
+      ctx.font = '10px sans-serif';
+      const [, m, d] = dateStr.split('-');
+      ctx.fillText(`${m}/${d}`, x + barWidth / 2 - 10, cssHeight - 6);
+    }
   });
+}
+
+function setRangeButtonStyles() {
+  const btn7 = document.getElementById('trend-range-7');
+  const btn30 = document.getElementById('trend-range-30');
+  btn7.classList.toggle('btn-log', currentRange === 7);
+  btn7.classList.toggle('btn-del', currentRange !== 7);
+  btn30.classList.toggle('btn-log', currentRange === 30);
+  btn30.classList.toggle('btn-del', currentRange !== 30);
 }
 
 function renderTrends() {
   const settings = Store.getSettings();
-  const dates = lastNDates(7);
+  const dates = lastNDates(currentRange);
+
+  document.getElementById('trend-title').textContent = currentRange === 7 ? 'Last 7 Days' : 'Last 30 Days';
+  setRangeButtonStyles();
 
   const calorieTotals = [];
   const proteinTotals = [];
@@ -81,16 +98,28 @@ function renderTrends() {
 
   drawCaloriesBarChart(document.getElementById('trend-calories-chart'), dates, calorieTotals, settings.calorieTarget);
 
-  const avgCalories = Math.round(calorieTotals.reduce((a, b) => a + b, 0) / 7);
-  const avgProtein = Math.round(proteinTotals.reduce((a, b) => a + b, 0) / 7);
+  const daysLogged = calorieTotals.filter((c) => c > 0).length;
+  const avgCalories = Math.round(calorieTotals.reduce((a, b) => a + b, 0) / currentRange);
+  const avgProtein = Math.round(proteinTotals.reduce((a, b) => a + b, 0) / currentRange);
   const avgSteps = stepsDaysLogged ? Math.round(stepsSum / stepsDaysLogged) : 0;
 
   document.getElementById('trend-stats').innerHTML = `
     <div><span class="muted">Avg cal/day</span><br /><b>${avgCalories}</b></div>
     <div><span class="muted">Avg protein/day</span><br /><b>${avgProtein}g</b></div>
     <div><span class="muted">Avg steps/day</span><br /><b>${avgSteps || '—'}</b></div>
-    <div><span class="muted">Days logged</span><br /><b>${calorieTotals.filter((c) => c > 0).length}/7</b></div>
+    <div><span class="muted">Days logged</span><br /><b>${daysLogged}/${currentRange}</b></div>
   `;
 }
 
-export const Trends = { renderTrends };
+function wireTrendControls() {
+  document.getElementById('trend-range-7').addEventListener('click', () => {
+    currentRange = 7;
+    renderTrends();
+  });
+  document.getElementById('trend-range-30').addEventListener('click', () => {
+    currentRange = 30;
+    renderTrends();
+  });
+}
+
+export const Trends = { renderTrends, wireTrendControls };

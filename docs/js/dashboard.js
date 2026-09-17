@@ -1,5 +1,6 @@
 import { Store } from './state.js';
 import { Photos } from './photos.js';
+import { Quality } from './quality.js';
 
 const MEAL_ORDER = ['breakfast', 'lunch', 'dinner', 'snack'];
 
@@ -223,6 +224,7 @@ async function renderMeals(entries, settings) {
             ${flags.sodium ? ' · <span class="entry-flags">⚠️ high sodium</span>' : ''}
             ${flags.sugar ? ' · <span class="entry-flags">⚠️ high sugar</span>' : ''}
           </div>
+          ${entry.nutriscore || entry.nova ? `<div style="margin-top:4px;">${Quality.chipsHtml(entry.nutriscore, entry.nova)}</div>` : ''}
         </div>
         <button class="entry-delete" data-id="${entry.id}" aria-label="Delete">✕</button>
       `;

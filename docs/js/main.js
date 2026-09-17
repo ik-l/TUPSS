@@ -5,6 +5,7 @@ import { Weight } from './weight.js';
 import { Settings } from './settings.js';
 import { Reminder } from './reminder.js';
 import { Trends } from './trends.js';
+import { HealthHistory } from './healthHistory.js';
 
 function switchView(name) {
   document.querySelectorAll('.view').forEach((v) => v.classList.remove('active'));
@@ -17,6 +18,7 @@ function switchView(name) {
   if (name === 'weight') {
     Weight.renderWeightView();
     Trends.renderTrends();
+    HealthHistory.renderHealthHistory();
   }
   if (name === 'settings') Settings.loadSettingsIntoForm();
 }
@@ -32,9 +34,11 @@ function init() {
   Dashboard.wireDashboardInputs();
   Log.wireLogForm(() => switchView('dashboard'));
   Favorites.wireFavoriteForm();
+  Favorites.wireRecipeBuilder(() => Dashboard.updateStreakBadge());
   Weight.wireWeightForm();
   Settings.wireSettingsForm();
   Reminder.startReminderLoop();
+  Trends.wireTrendControls();
   switchView('dashboard');
 }
 

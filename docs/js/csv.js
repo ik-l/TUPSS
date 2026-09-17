@@ -115,4 +115,87 @@ function importExerciseCSV(text) {
   return seenDates.size;
 }
 
-export const CSV = { parseCSV, combineDateTime, importNutritionCSV, importMeasurementCSV, importExerciseCSV };
+function csvEscape(val) {
+  const str = String(val ?? '');
+  return /[",\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
+}
+
+function toCSV(headers, rows) {
+  const lines = [headers.join(',')];
+  for (const row of rows) {
+    lines.push(headers.map((h) => csvEscape(row[h])).join(','));
+  }
+  return lines.join('\n');
+}
+
+function downloadCSV(filename, csvText) {
+  const blob = new Blob([csvText], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function formatTimeFromISO(iso) {
+  const d = new Date(iso);
+  return d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+}
+
+function exportNutritionCSV() {
+  const entries = Store.getEntries().slice().sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+  const headers = ['Date', 'Meal', 'Time', 'Name', 'Calories', 'Protein (g)', 'Carbohydrates (g)', 'Fat (g)', 'Sodium (mg)', 'Sugar (g)', 'Nutri-Score', 'NOVA', 'Source'];
+  const rows = entries.map((e) => ({
+    Date: e.timestamp.slice(0, 10),
+    Meal: e.meal,
+    Time: formatTimeFromISO(e.timestamp),
+    Name: e.name,
+    Calories: e.calories,
+    'Protein (g)': e.protein,
+    'Carbohydrates (g)': e.carbs,
+    'Fat (g)': e.fat,
+    'Sodium (mg)': e.sodium,
+    'Sugar (g)': e.sugar,
+    'Nutri-Score': e.nutriscore || '',
+    NOVA: e.nova || '',
+    Source: e.source || '',
+  }));
+  downloadCSV(`fitness-tracker-nutrition-${Store.todayStr()}.csv`, toCSV(headers, rows));
+  return entries.length;
+}
+
+function exportMeasurementCSV() {
+  const weights = Store.getWeights();
+  const headers = ['Date', 'Weight'];
+  const rows = weights.map((w) => ({ Date: w.date, Weight: w.weight }));
+  downloadCSV(`fitness-tracker-weight-${Store.todayStr()}.csv`, toCSV(headers, rows));
+  return weights.length;
+}
+
+function exportDailyExtrasCSV() {
+  const all = Store.getAllDailyExtras();
+  const dates = Object.keys(all).sort();
+  const headers = ['Date', 'Steps', 'Standing Minutes', 'Water (oz)'];
+  const rows = dates.map((date) => ({
+    Date: date,
+    Steps: all[date].steps ?? '',
+    'Standing Minutes': all[date].standingMinutes ?? '',
+    'Water (oz)': all[date].waterOz ?? '',
+  }));
+  downloadCSV(`fitness-tracker-daily-${Store.todayStr()}.csv`, toCSV(headers, rows));
+  return dates.length;
+}
+
+export const CSV = {
+  parseCSV,
+  combineDateTime,
+  importNutritionCSV,
+  importMeasurementCSV,
+  importExerciseCSV,
+  exportNutritionCSV,
+  exportMeasurementCSV,
+  exportDailyExtrasCSV,
+};

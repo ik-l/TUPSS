@@ -85,6 +85,8 @@ function addEntry(entry) {
     timestamp: entry.timestamp || new Date().toISOString(),
     photoId: entry.photoId || null,
     source: entry.source || 'manual',
+    nutriscore: entry.nutriscore || null,
+    nova: entry.nova || null,
   };
   entries.push(full);
   writeJSON(KEYS.entries, entries);
@@ -197,6 +199,10 @@ function addWater(dateStr, ounces) {
   return saveDailyExtras(dateStr, { waterOz: Math.max(0, (current.waterOz || 0) + ounces) });
 }
 
+function getAllDailyExtras() {
+  return readJSON(KEYS.daily, {});
+}
+
 // ---------- Favorites ----------
 function getFavorites() {
   return readJSON(KEYS.favorites, []);
@@ -257,6 +263,7 @@ export const Store = {
   getDailyExtras,
   saveDailyExtras,
   addWater,
+  getAllDailyExtras,
   getFavorites,
   addFavorite,
   deleteFavorite,

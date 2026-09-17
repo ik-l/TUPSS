@@ -199,10 +199,18 @@
         <button id="btn-save-settings" class="btn btn-primary full-width">Save Settings</button>
       </div>
       <div class="card">
-        <div class="card-title">Import from Another App</div>
-        <p class="muted">Paste a list of items (JSON) to bulk-add them to today's log — useful for bringing over entries you already logged elsewhere today.</p>
-        <textarea id="import-textarea" rows="6" style="width:100%;font-family:monospace;font-size:12px;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);"></textarea>
-        <button id="btn-import" class="btn btn-primary full-width">Import Items</button>
+        <div class="card-title">Import CSV Export</div>
+        <p class="muted">Paste CSV exports from another tracker (e.g. MyFitnessPal-style "Nutrition Summary" / "Measurement Summary" / "Exercise Summary" files). Each entry lands on its own real date from the file, not just today. Leave any box empty to skip it.</p>
+        <label>Nutrition Summary CSV
+          <textarea id="import-nutrition-csv" rows="5" class="csv-box"></textarea>
+        </label>
+        <label>Measurement Summary CSV (weight)
+          <textarea id="import-measurement-csv" rows="3" class="csv-box"></textarea>
+        </label>
+        <label>Exercise Summary CSV (for steps)
+          <textarea id="import-exercise-csv" rows="3" class="csv-box"></textarea>
+        </label>
+        <button id="btn-import-csv" class="btn btn-primary full-width">Import CSV Data</button>
         <div id="import-status" class="muted"></div>
       </div>
       <div class="card">

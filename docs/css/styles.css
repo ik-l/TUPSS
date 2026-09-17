@@ -160,6 +160,13 @@ input, select {
 
 #reader { width: 100%; margin: 10px 0; }
 
+.csv-box {
+  font-family: monospace;
+  font-size: 11px;
+  white-space: pre;
+  overflow-x: auto;
+}
+
 .meal-group { margin-bottom: 12px; }
 .meal-group h4 { margin: 0 0 6px; text-transform: capitalize; }
 .entry-row {

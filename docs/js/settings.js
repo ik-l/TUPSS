@@ -1,29 +1,23 @@
 import { Store } from './state.js';
 import { Reminder } from './reminder.js';
 import { UI } from './ui.js';
+import { CSV } from './csv.js';
 
-// One-time convenience default for the "Import from another app" box, so a
-// backfill from another tracker is a single tap instead of retyping items.
-// Times are combined with *today's* date at import time (see parseTimeToToday),
-// so this stays correct no matter which day it's actually used.
-const DEFAULT_IMPORT = [
-  { name: 'Vanilla Protein Shake (Oikos)', meal: 'breakfast', time: '10:45 AM', calories: 170, protein: 30, carbs: 8, fat: 4, sodium: 0, sugar: 0 },
-  { name: 'Raspberry Lemon Sparkling Energy Drink (Bloom)', meal: 'lunch', time: '1:00 PM', calories: 10, protein: 0, carbs: 2, fat: 0, sodium: 0, sugar: 0 },
-  { name: 'Dinner: Chocolate Milk, Vietnamese Summer Roll, Spring Roll, Bread, Pepper Jack Singles, Over Easy Egg', meal: 'dinner', time: '7:45 PM', calories: 970, protein: 56, carbs: 101, fat: 39, sodium: 0, sugar: 0 },
-];
+// One-time convenience prefill: your actual MyFitnessPal-style export
+// (2026-09-09 to 2026-09-16), so the first import is a single tap.
+const DEFAULT_NUTRITION_CSV = `Date,Meal,Time,Calories,Fat (g),Saturated Fat,Polyunsaturated Fat,Monounsaturated Fat,Trans Fat,Cholesterol,Sodium (mg),Potassium,Carbohydrates (g),Fiber,Sugar,Protein (g),Vitamin A,Vitamin C,Calcium,Iron,Note
+2026-09-16,Breakfast,10:45 AM,170.0,3.5,2.5,0.0,0.0,0.0,25.0,210.0,0.0,8.0,5.0,1.0,30.0,0.0,0.0,72.0,0.0,
+2026-09-16,Dinner,,240.0,5.0,0.0,3.0,0.0,0.0,0.0,340.0,200.0,38.0,6.0,6.0,10.0,0.0,0.0,3.0,10.0,
+2026-09-16,Dinner,7:45 PM,220.0,8.0,5.0,0.0,0.0,0.2,35.0,210.0,416.0,31.0,0.0,22.0,7.0,240.0,2.4,280.0,0.6,
+2026-09-16,Dinner,8:25 PM,250.2,6.7,1.3,1.8,2.7,0.0,124.3,996.5,406.0,29.3,2.7,4.8,18.6,78.4,13.5,9.5,6.5,
+2026-09-16,Dinner,9:25 PM,260.0,19.0,9.0,2.4,3.0,0.0,420.0,570.0,328.0,2.8,0.0,1.0,20.0,20.0,0.0,30.0,12.0,
+2026-09-16,Lunch,1:00 PM,10.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,2.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,`;
 
-function parseTimeToToday(timeStr) {
-  const match = String(timeStr || '').match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
-  const d = new Date();
-  if (!match) return d.toISOString();
-  let hh = parseInt(match[1], 10);
-  const mm = parseInt(match[2], 10);
-  const ap = match[3];
-  if (ap && /PM/i.test(ap) && hh !== 12) hh += 12;
-  if (ap && /AM/i.test(ap) && hh === 12) hh = 0;
-  d.setHours(hh, mm, 0, 0);
-  return d.toISOString();
-}
+const DEFAULT_MEASUREMENT_CSV = `Date,Weight
+2026-09-16,250.0`;
+
+const DEFAULT_EXERCISE_CSV = `Date,Exercise,Type,Exercise Calories,Exercise Minutes,Sets,Reps Per Set,Pounds,Steps,Note
+2026-09-16,MFP iOS calorie adjustment,Cardio,14.0,1,,,,1829,`;
 
 function loadSettingsIntoForm() {
   const s = Store.getSettings();
@@ -39,10 +33,12 @@ function loadSettingsIntoForm() {
   ).padStart(2, '0')}`;
   updateReminderStatus(s);
 
-  const importBox = document.getElementById('import-textarea');
-  if (importBox && !importBox.value.trim()) {
-    importBox.value = JSON.stringify(DEFAULT_IMPORT, null, 2);
-  }
+  const nBox = document.getElementById('import-nutrition-csv');
+  const mBox = document.getElementById('import-measurement-csv');
+  const eBox = document.getElementById('import-exercise-csv');
+  if (nBox && !nBox.value.trim()) nBox.value = DEFAULT_NUTRITION_CSV;
+  if (mBox && !mBox.value.trim()) mBox.value = DEFAULT_MEASUREMENT_CSV;
+  if (eBox && !eBox.value.trim()) eBox.value = DEFAULT_EXERCISE_CSV;
 }
 
 function updateReminderStatus(s) {
@@ -87,39 +83,35 @@ function wireSettingsForm(onSaved) {
     onSaved && onSaved();
   });
 
-  document.getElementById('btn-import').addEventListener('click', () => {
-    const box = document.getElementById('import-textarea');
+  document.getElementById('btn-import-csv').addEventListener('click', () => {
     const statusEl = document.getElementById('import-status');
-    let items;
+    const nText = document.getElementById('import-nutrition-csv').value.trim();
+    const mText = document.getElementById('import-measurement-csv').value.trim();
+    const eText = document.getElementById('import-exercise-csv').value.trim();
+
+    let nCount = 0;
+    let mCount = 0;
+    let eCount = 0;
     try {
-      items = JSON.parse(box.value);
-      if (!Array.isArray(items)) throw new Error('Expected a list of items');
+      if (nText) nCount = CSV.importNutritionCSV(nText);
+      if (mText) mCount = CSV.importMeasurementCSV(mText);
+      if (eText) eCount = CSV.importExerciseCSV(eText);
     } catch (e) {
       statusEl.textContent = `Couldn't read that: ${e.message}`;
       return;
     }
 
-    let count = 0;
-    for (const item of items) {
-      if (!item || !item.name) continue;
-      Store.addEntry({
-        name: item.name,
-        meal: item.meal || 'snack',
-        calories: item.calories,
-        protein: item.protein,
-        carbs: item.carbs,
-        fat: item.fat,
-        sodium: item.sodium,
-        sugar: item.sugar,
-        timestamp: parseTimeToToday(item.time),
-        source: 'import',
-      });
-      count += 1;
-    }
+    document.getElementById('import-nutrition-csv').value = '';
+    document.getElementById('import-measurement-csv').value = '';
+    document.getElementById('import-exercise-csv').value = '';
 
-    box.value = '';
-    statusEl.textContent = `Imported ${count} item${count === 1 ? '' : 's'} into today's log. Check the Dashboard tab.`;
-    UI.showToast(`Imported ${count} item${count === 1 ? '' : 's'}`);
+    const parts = [];
+    if (nText) parts.push(`${nCount} food entr${nCount === 1 ? 'y' : 'ies'}`);
+    if (mText) parts.push(`${mCount} weight entr${mCount === 1 ? 'y' : 'ies'}`);
+    if (eText) parts.push(`steps for ${eCount} day${eCount === 1 ? '' : 's'}`);
+    const summary = parts.length ? `Imported ${parts.join(', ')}.` : 'Nothing to import — all boxes were empty.';
+    statusEl.textContent = summary;
+    UI.showToast(summary);
     onSaved && onSaved();
   });
 

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Fitness Tracker</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8F%83%3C/text%3E%3C/svg%3E" />
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <h1>Fitness Tracker</h1>
+    <div id="streak-badge" class="streak-badge" title="Consecutive days logged">🔥 0</div>
+  </header>
+
+  <main id="views">
+    <!-- DASHBOARD -->
+    <section id="view-dashboard" class="view active">
+      <div class="card">
+        <div class="card-title">Today</div>
+        <div id="dash-date" class="muted"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Calories</div>
+        <div class="progress-row">
+          <div class="progress-bar"><div id="bar-calories" class="progress-fill"></div></div>
+          <div id="txt-calories" class="progress-text">0 / 1900</div>
+        </div>
+        <div class="card-title">Protein</div>
+        <div class="progress-row">
+          <div class="progress-bar"><div id="bar-protein" class="progress-fill protein"></div></div>
+          <div id="txt-protein" class="progress-text">0 / 150g</div>
+        </div>
+        <div class="macro-grid">
+          <div><span class="muted">Carbs</span><br /><b id="txt-carbs">0g</b></div>
+          <div><span class="muted">Fat</span><br /><b id="txt-fat">0g</b></div>
+          <div><span class="muted">Sodium</span><br /><b id="txt-sodium">0mg</b></div>
+          <div><span class="muted">Sugar</span><br /><b id="txt-sugar">0g</b></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Steps &amp; Standing</div>
+        <div class="two-col">
+          <label>Steps
+            <input type="number" id="input-steps" min="0" placeholder="e.g. 6500" />
+          </label>
+          <label>Standing (min)
+            <input type="number" id="input-standing" min="0" placeholder="e.g. 45" />
+          </label>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Weight Progress</div>
+        <div id="dash-weight-progress" class="muted">No weight logged yet.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Meals Today</div>
+        <div id="dash-meals"></div>
+      </div>
+    </section>
+
+    <!-- LOG -->
+    <section id="view-log" class="view">
+      <div class="card">
+        <div class="card-title">Scan Barcode</div>
+        <button id="btn-scan" class="btn btn-primary">📷 Scan Barcode</button>
+        <div id="scan-area" class="hidden">
+          <div id="reader"></div>
+          <button id="btn-scan-cancel" class="btn btn-secondary">Cancel</button>
+        </div>
+        <div id="scan-status" class="muted"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Add Item</div>
+        <form id="form-log">
+          <label>Name
+            <input type="text" id="f-name" required placeholder="e.g. Chicken breast" />
+          </label>
+          <div id="swap-banner" class="banner hidden"></div>
+          <label>Meal
+            <select id="f-meal">
+              <option value="breakfast">Breakfast</option>
+              <option value="lunch">Lunch</option>
+              <option value="dinner">Dinner</option>
+              <option value="snack" selected>Snack</option>
+            </select>
+          </label>
+          <div class="two-col">
+            <label>Calories<input type="number" id="f-calories" min="0" step="1" /></label>
+            <label>Protein (g)<input type="number" id="f-protein" min="0" step="0.1" /></label>
+          </div>
+          <div class="two-col">
+            <label>Carbs (g)<input type="number" id="f-carbs" min="0" step="0.1" /></label>
+            <label>Fat (g)<input type="number" id="f-fat" min="0" step="0.1" /></label>
+          </div>
+          <div class="two-col">
+            <label>Sodium (mg)<input type="number" id="f-sodium" min="0" step="1" /></label>
+            <label>Sugar (g)<input type="number" id="f-sugar" min="0" step="0.1" /></label>
+          </div>
+          <div id="alert-banner" class="banner alert hidden"></div>
+          <label>Photo (optional)
+            <input type="file" id="f-photo" accept="image/*" capture="environment" />
+          </label>
+          <label class="checkbox-row">
+            <input type="checkbox" id="f-save-fav" />
+            Also save as a quick-log favorite
+          </label>
+          <button type="submit" class="btn btn-primary">Add to Log</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- FAVORITES -->
+    <section id="view-favorites" class="view">
+      <div class="card">
+        <div class="card-title">Quick-Log Favorites</div>
+        <div id="favorites-list"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">New Favorite</div>
+        <p class="muted">Save a regular order (e.g. "In-N-Out Protein Style") as a one-tap log.</p>
+        <form id="form-favorite">
+          <label>Label<input type="text" id="fav-label" required placeholder="e.g. In-N-Out Protein Style" /></label>
+          <label>Default meal
+            <select id="fav-meal">
+              <option value="breakfast">Breakfast</option>
+              <option value="lunch">Lunch</option>
+              <option value="dinner">Dinner</option>
+              <option value="snack" selected>Snack</option>
+            </select>
+          </label>
+          <div class="two-col">
+            <label>Calories<input type="number" id="fav-calories" min="0" step="1" /></label>
+            <label>Protein (g)<input type="number" id="fav-protein" min="0" step="0.1" /></label>
+          </div>
+          <div class="two-col">
+            <label>Carbs (g)<input type="number" id="fav-carbs" min="0" step="0.1" /></label>
+            <label>Fat (g)<input type="number" id="fav-fat" min="0" step="0.1" /></label>
+          </div>
+          <div class="two-col">
+            <label>Sodium (mg)<input type="number" id="fav-sodium" min="0" step="1" /></label>
+            <label>Sugar (g)<input type="number" id="fav-sugar" min="0" step="0.1" /></label>
+          </div>
+          <button type="submit" class="btn btn-primary">Save Favorite</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- WEIGHT -->
+    <section id="view-weight" class="view">
+      <div class="card">
+        <div class="card-title">Log Weight</div>
+        <form id="form-weight" class="two-col">
+          <label>Date<input type="date" id="w-date" required /></label>
+          <label>Weight (lbs)<input type="number" id="w-weight" min="0" step="0.1" required /></label>
+          <button type="submit" class="btn btn-primary full-width">Save Weight</button>
+        </form>
+      </div>
+      <div class="card">
+        <div class="card-title">Trend</div>
+        <canvas id="weight-chart" width="600" height="260"></canvas>
+        <div id="weight-goal-text" class="muted"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">History</div>
+        <div id="weight-list"></div>
+      </div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section id="view-settings" class="view">
+      <div class="card">
+        <div class="card-title">Targets</div>
+        <label>Daily calorie target<input type="number" id="s-calorie-target" min="0" /></label>
+        <label>Daily protein target (g)<input type="number" id="s-protein-target" min="0" /></label>
+        <label>Starting weight (lbs)<input type="number" id="s-starting-weight" min="0" step="0.1" /></label>
+        <label>Goal weight (lbs)<input type="number" id="s-weight-goal" min="0" step="0.1" /></label>
+      </div>
+      <div class="card">
+        <div class="card-title">Alert Thresholds (per item)</div>
+        <label>Sodium (mg)<input type="number" id="s-sodium-threshold" min="0" /></label>
+        <label>Added sugar (g)<input type="number" id="s-sugar-threshold" min="0" /></label>
+      </div>
+      <div class="card">
+        <div class="card-title">Meal Reminder</div>
+        <label class="checkbox-row">
+          <input type="checkbox" id="s-reminder-enabled" />
+          Remind me if I haven't logged a meal by...
+        </label>
+        <input type="time" id="s-reminder-time" />
+        <div id="reminder-status" class="muted"></div>
+      </div>
+      <div class="card">
+        <button id="btn-save-settings" class="btn btn-primary full-width">Save Settings</button>
+      </div>
+      <div class="card">
+        <div class="card-title">Data</div>
+        <button id="btn-reset-data" class="btn btn-danger full-width">Reset All Data</button>
+      </div>
+    </section>
+  </main>
+
+  <div id="reminder-toast" class="toast hidden"></div>
+
+  <nav class="tabbar">
+    <button class="tab active" data-view="dashboard">🏠<span>Dashboard</span></button>
+    <button class="tab" data-view="log">➕<span>Log</span></button>
+    <button class="tab" data-view="favorites">⭐<span>Favorites</span></button>
+    <button class="tab" data-view="weight">📈<span>Weight</span></button>
+    <button class="tab" data-view="settings">⚙️<span>Settings</span></button>
+  </nav>
+
+  <!-- html5-qrcode: classic (non-module) script so it's available as window.Html5Qrcode
+       before our module scripts run. Requires internet access + HTTPS (or localhost) for camera use. -->
+  <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

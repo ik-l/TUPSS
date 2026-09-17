@@ -7,6 +7,18 @@ import { UI } from './ui.js';
 
 let intervalId = null;
 
+function sendReminder(message) {
+  if (window.Notification && Notification.permission === 'granted') {
+    try {
+      new Notification('Fitness Tracker', { body: message });
+      return;
+    } catch (e) {
+      /* fall through to toast */
+    }
+  }
+  UI.showToast(message, 8000);
+}
+
 function maybeFireReminder() {
   const settings = Store.getSettings();
   if (!settings.reminderEnabled) return;
@@ -26,23 +38,41 @@ function maybeFireReminder() {
     return;
   }
 
-  const message = "You haven't logged a meal today yet — don't skip to dinner. Log something now.";
-  if (window.Notification && Notification.permission === 'granted') {
-    try {
-      new Notification('Fitness Tracker', { body: message });
-    } catch (e) {
-      UI.showToast(message, 8000);
-    }
-  } else {
-    UI.showToast(message, 8000);
-  }
+  sendReminder("You haven't logged a meal today yet — don't skip to dinner. Log something now.");
   Store.saveReminderState({ lastShownDate: today });
+}
+
+function maybeFireSnackReminder() {
+  const settings = Store.getSettings();
+  if (!settings.snackReminderEnabled) return;
+
+  const now = new Date();
+  const target = new Date(now);
+  target.setHours(settings.snackReminderHour, settings.snackReminderMinute, 0, 0);
+  if (now < target) return;
+
+  const today = Store.todayStr();
+  const reminderState = Store.getReminderState();
+  if (reminderState.lastSnackShownDate === today) return;
+
+  const hasSnackToday = Store.getEntriesForDate(today).some((e) => e.meal === 'snack');
+  if (hasSnackToday) {
+    Store.saveReminderState({ lastSnackShownDate: today });
+    return;
+  }
+
+  sendReminder("No fruit or snack logged yet today — a good time for one.");
+  Store.saveReminderState({ lastSnackShownDate: today });
 }
 
 function startReminderLoop() {
   if (intervalId) clearInterval(intervalId);
   maybeFireReminder();
-  intervalId = setInterval(maybeFireReminder, 60 * 1000);
+  maybeFireSnackReminder();
+  intervalId = setInterval(() => {
+    maybeFireReminder();
+    maybeFireSnackReminder();
+  }, 60 * 1000);
 }
 
 async function requestPermissionIfNeeded() {

@@ -15,6 +15,75 @@ function updateStreakBadge() {
   document.getElementById('streak-badge').textContent = `🔥 ${count}`;
 }
 
+// Ring segments are sized by each macro's share of calories (carbs/protein
+// @4 kcal/g, fat @9 kcal/g) — the same convention MyFitnessPal's ring uses —
+// while the center shows the actual logged calorie total.
+function drawMacroRing(totals) {
+  const canvas = document.getElementById('macro-ring');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const size = canvas.clientWidth || 160;
+  canvas.width = size * dpr;
+  canvas.height = size * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, size, size);
+
+  const carbCals = totals.carbs * 4;
+  const fatCals = totals.fat * 9;
+  const proteinCals = totals.protein * 4;
+  const macroCalSum = carbCals + fatCals + proteinCals;
+
+  const segments = macroCalSum > 0
+    ? [
+        { pct: (carbCals / macroCalSum) * 100, color: '#14b8a6' },
+        { pct: (fatCals / macroCalSum) * 100, color: '#a78bfa' },
+        { pct: (proteinCals / macroCalSum) * 100, color: '#f59e0b' },
+      ]
+    : [{ pct: 100, color: getComputedStyle(document.body).getPropertyValue('--border') || '#e5e7eb' }];
+
+  const cx = size / 2;
+  const cy = size / 2;
+  const strokeWidth = 16;
+  const radius = size / 2 - strokeWidth / 2 - 2;
+  let startAngle = -Math.PI / 2;
+  segments.forEach((seg) => {
+    const angle = (seg.pct / 100) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, startAngle, startAngle + angle);
+    ctx.strokeStyle = seg.color;
+    ctx.lineWidth = strokeWidth;
+    ctx.lineCap = angle >= Math.PI * 2 - 0.01 ? 'butt' : 'round';
+    ctx.stroke();
+    startAngle += angle;
+  });
+
+  const textColor = getComputedStyle(document.body).color;
+  ctx.fillStyle = textColor;
+  ctx.textAlign = 'center';
+  ctx.font = 'bold 28px sans-serif';
+  ctx.fillText(`${Math.round(totals.calories)}`, cx, cy - 2);
+  ctx.font = '12px sans-serif';
+  ctx.fillText('cal', cx, cy + 18);
+
+  const carbsPct = macroCalSum > 0 ? Math.round((carbCals / macroCalSum) * 100) : 0;
+  const fatPct = macroCalSum > 0 ? Math.round((fatCals / macroCalSum) * 100) : 0;
+  const proteinPct = macroCalSum > 0 ? Math.round((proteinCals / macroCalSum) * 100) : 0;
+  document.getElementById('ring-carbs-pct').textContent = `${carbsPct}%`;
+  document.getElementById('ring-carbs-g').textContent = `${Math.round(totals.carbs)} g`;
+  document.getElementById('ring-fat-pct').textContent = `${fatPct}%`;
+  document.getElementById('ring-fat-g').textContent = `${Math.round(totals.fat)} g`;
+  document.getElementById('ring-protein-pct').textContent = `${proteinPct}%`;
+  document.getElementById('ring-protein-g').textContent = `${Math.round(totals.protein)} g`;
+}
+
+function renderWater(settings) {
+  const extras = Store.getDailyExtras(viewDate);
+  const waterOz = extras.waterOz || 0;
+  const pct = Math.max(0, Math.min(100, (waterOz / settings.waterTargetOz) * 100));
+  document.getElementById('bar-water').style.width = `${pct}%`;
+  document.getElementById('txt-water').textContent = `${waterOz} / ${settings.waterTargetOz}oz`;
+}
+
 function shiftDateStr(dateStr, days) {
   const [y, m, d] = dateStr.split('-').map(Number);
   const dt = new Date(y, m - 1, d);
@@ -59,25 +128,26 @@ async function renderDashboard() {
   const entries = Store.getEntriesForDate(viewDate);
   const totals = Store.sumEntries(entries);
 
-  const calPct = pct(totals.calories, settings.calorieTarget);
   const proteinPct = pct(totals.protein, settings.proteinTarget);
-  const calBar = document.getElementById('bar-calories');
-  calBar.style.width = `${calPct}%`;
-  calBar.classList.toggle('over', totals.calories > settings.calorieTarget);
   document.getElementById('txt-calories').textContent = `${Math.round(totals.calories)} / ${settings.calorieTarget}`;
 
   const proteinBar = document.getElementById('bar-protein');
   proteinBar.style.width = `${proteinPct}%`;
   document.getElementById('txt-protein').textContent = `${Math.round(totals.protein)} / ${settings.proteinTarget}g`;
 
-  document.getElementById('txt-carbs').textContent = `${Math.round(totals.carbs)}g`;
-  document.getElementById('txt-fat').textContent = `${Math.round(totals.fat)}g`;
   document.getElementById('txt-sodium').textContent = `${Math.round(totals.sodium)}mg`;
   document.getElementById('txt-sugar').textContent = `${Math.round(totals.sugar * 10) / 10}g`;
+
+  const remaining = settings.calorieTarget - totals.calories;
+  document.getElementById('txt-calories-remaining').textContent =
+    remaining >= 0 ? `${Math.round(remaining)} cal remaining` : `${Math.round(-remaining)} cal over`;
+
+  drawMacroRing(totals);
 
   const extras = Store.getDailyExtras(viewDate);
   document.getElementById('input-steps').value = extras.steps ?? '';
   document.getElementById('input-standing').value = extras.standingMinutes ?? '';
+  renderWater(settings);
 
   renderWeightProgress(settings);
   await renderMeals(entries, settings);
@@ -192,6 +262,17 @@ function wireDashboardInputs() {
   });
   document.getElementById('dash-prev-day').addEventListener('click', goToPrevDay);
   document.getElementById('dash-next-day').addEventListener('click', goToNextDay);
+
+  document.querySelectorAll('.btn-water').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      Store.addWater(viewDate, Number(btn.dataset.oz));
+      renderWater(Store.getSettings());
+    });
+  });
+  document.getElementById('btn-water-reset').addEventListener('click', () => {
+    Store.saveDailyExtras(viewDate, { waterOz: 0 });
+    renderWater(Store.getSettings());
+  });
 }
 
 export const Dashboard = { renderDashboard, wireDashboardInputs, updateStreakBadge };

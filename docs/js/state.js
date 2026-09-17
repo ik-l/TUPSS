@@ -21,6 +21,10 @@ const DEFAULT_SETTINGS = {
   reminderEnabled: false,
   reminderHour: 13,
   reminderMinute: 0,
+  waterTargetOz: 100,
+  snackReminderEnabled: false,
+  snackReminderHour: 15,
+  snackReminderMinute: 0,
 };
 
 function readJSON(key, fallback) {
@@ -175,10 +179,10 @@ function getLatestWeight() {
   return weights.length ? weights[weights.length - 1] : null;
 }
 
-// ---------- Daily extras (steps / standing) ----------
+// ---------- Daily extras (steps / standing / water) ----------
 function getDailyExtras(dateStr) {
   const all = readJSON(KEYS.daily, {});
-  return all[dateStr] || { steps: null, standingMinutes: null };
+  return { steps: null, standingMinutes: null, waterOz: 0, ...(all[dateStr] || {}) };
 }
 
 function saveDailyExtras(dateStr, partial) {
@@ -186,6 +190,11 @@ function saveDailyExtras(dateStr, partial) {
   all[dateStr] = { ...(all[dateStr] || {}), ...partial };
   writeJSON(KEYS.daily, all);
   return all[dateStr];
+}
+
+function addWater(dateStr, ounces) {
+  const current = getDailyExtras(dateStr);
+  return saveDailyExtras(dateStr, { waterOz: Math.max(0, (current.waterOz || 0) + ounces) });
 }
 
 // ---------- Favorites ----------
@@ -219,7 +228,7 @@ function deleteFavorite(id) {
 
 // ---------- Reminder state ----------
 function getReminderState() {
-  return readJSON(KEYS.reminder, { lastShownDate: null });
+  return { lastShownDate: null, lastSnackShownDate: null, ...readJSON(KEYS.reminder, {}) };
 }
 
 function saveReminderState(partial) {
@@ -247,6 +256,7 @@ export const Store = {
   getLatestWeight,
   getDailyExtras,
   saveDailyExtras,
+  addWater,
   getFavorites,
   addFavorite,
   deleteFavorite,

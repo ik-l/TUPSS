@@ -158,6 +158,38 @@ input, select {
   border: 1px solid var(--warn-border);
 }
 
+.ring-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+#macro-ring { flex-shrink: 0; }
+.ring-macros {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ring-macro {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.ring-macro .ring-pct { font-weight: 700; width: 42px; }
+.ring-macro b { min-width: 44px; }
+.ring-carbs .ring-pct, .ring-carbs b { color: #14b8a6; }
+.ring-fat .ring-pct, .ring-fat b { color: #a78bfa; }
+.ring-protein .ring-pct, .ring-protein b { color: #f59e0b; }
+
+.progress-fill.water { background: #0ea5e9; }
+.water-buttons {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-top: 8px;
+}
+.btn-water { background: #0ea5e9; color: white; }
+
 .date-nav {
   display: flex;
   align-items: center;

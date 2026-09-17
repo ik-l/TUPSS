@@ -25,6 +25,7 @@ function loadSettingsIntoForm() {
   document.getElementById('s-protein-target').value = s.proteinTarget;
   document.getElementById('s-starting-weight').value = s.startingWeight;
   document.getElementById('s-weight-goal').value = s.weightGoal;
+  document.getElementById('s-water-target').value = s.waterTargetOz;
   document.getElementById('s-sodium-threshold').value = s.sodiumThreshold;
   document.getElementById('s-sugar-threshold').value = s.sugarThreshold;
   document.getElementById('s-reminder-enabled').checked = s.reminderEnabled;
@@ -32,6 +33,12 @@ function loadSettingsIntoForm() {
     s.reminderMinute
   ).padStart(2, '0')}`;
   updateReminderStatus(s);
+
+  document.getElementById('s-snack-reminder-enabled').checked = s.snackReminderEnabled;
+  document.getElementById('s-snack-reminder-time').value = `${String(s.snackReminderHour).padStart(2, '0')}:${String(
+    s.snackReminderMinute
+  ).padStart(2, '0')}`;
+  updateSnackReminderStatus(s);
 
   const nBox = document.getElementById('import-nutrition-csv');
   const mBox = document.getElementById('import-measurement-csv');
@@ -57,28 +64,44 @@ function updateReminderStatus(s) {
   el.textContent = `Reminds you if nothing is logged by then. ${permNote}`;
 }
 
+function updateSnackReminderStatus(s) {
+  const el = document.getElementById('snack-reminder-status');
+  el.textContent = s.snackReminderEnabled
+    ? "Reminds you if no fruit/snack is logged by then."
+    : 'Reminder is off.';
+}
+
 function wireSettingsForm(onSaved) {
   document.getElementById('btn-save-settings').addEventListener('click', async () => {
     const timeVal = document.getElementById('s-reminder-time').value || '13:00';
     const [hh, mm] = timeVal.split(':').map(Number);
     const reminderEnabled = document.getElementById('s-reminder-enabled').checked;
 
+    const snackTimeVal = document.getElementById('s-snack-reminder-time').value || '15:00';
+    const [shh, smm] = snackTimeVal.split(':').map(Number);
+    const snackReminderEnabled = document.getElementById('s-snack-reminder-enabled').checked;
+
     const next = Store.saveSettings({
       calorieTarget: Number(document.getElementById('s-calorie-target').value) || 1900,
       proteinTarget: Number(document.getElementById('s-protein-target').value) || 150,
       startingWeight: Number(document.getElementById('s-starting-weight').value) || 251,
       weightGoal: Number(document.getElementById('s-weight-goal').value) || 208,
+      waterTargetOz: Number(document.getElementById('s-water-target').value) || 100,
       sodiumThreshold: Number(document.getElementById('s-sodium-threshold').value) || 800,
       sugarThreshold: Number(document.getElementById('s-sugar-threshold').value) || 25,
       reminderEnabled,
       reminderHour: hh,
       reminderMinute: mm,
+      snackReminderEnabled,
+      snackReminderHour: shh,
+      snackReminderMinute: smm,
     });
 
-    if (reminderEnabled) {
+    if (reminderEnabled || snackReminderEnabled) {
       await Reminder.requestPermissionIfNeeded();
     }
     updateReminderStatus(next);
+    updateSnackReminderStatus(next);
     Reminder.startReminderLoop();
     onSaved && onSaved();
   });

@@ -28,21 +28,51 @@
       </div>
 
       <div class="card">
-        <div class="card-title">Calories</div>
-        <div class="progress-row">
-          <div class="progress-bar"><div id="bar-calories" class="progress-fill"></div></div>
-          <div id="txt-calories" class="progress-text">0 / 1900</div>
+        <div class="ring-row">
+          <canvas id="macro-ring" width="160" height="160"></canvas>
+          <div class="ring-macros">
+            <div class="ring-macro ring-carbs">
+              <span class="ring-pct" id="ring-carbs-pct">0%</span>
+              <b id="ring-carbs-g">0 g</b>
+              <span class="muted">Carbs</span>
+            </div>
+            <div class="ring-macro ring-fat">
+              <span class="ring-pct" id="ring-fat-pct">0%</span>
+              <b id="ring-fat-g">0 g</b>
+              <span class="muted">Fat</span>
+            </div>
+            <div class="ring-macro ring-protein">
+              <span class="ring-pct" id="ring-protein-pct">0%</span>
+              <b id="ring-protein-g">0 g</b>
+              <span class="muted">Protein</span>
+            </div>
+          </div>
         </div>
-        <div class="card-title">Protein</div>
+        <div id="txt-calories-remaining" class="muted" style="text-align:center;margin-top:4px;">0 cal remaining</div>
+
+        <div class="card-title" style="margin-top:16px;">Protein Goal</div>
         <div class="progress-row">
           <div class="progress-bar"><div id="bar-protein" class="progress-fill protein"></div></div>
           <div id="txt-protein" class="progress-text">0 / 150g</div>
         </div>
         <div class="macro-grid">
-          <div><span class="muted">Carbs</span><br /><b id="txt-carbs">0g</b></div>
-          <div><span class="muted">Fat</span><br /><b id="txt-fat">0g</b></div>
           <div><span class="muted">Sodium</span><br /><b id="txt-sodium">0mg</b></div>
           <div><span class="muted">Sugar</span><br /><b id="txt-sugar">0g</b></div>
+          <div><span class="muted">Cal Target</span><br /><b id="txt-calories">0/1900</b></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Water</div>
+        <div class="progress-row">
+          <div class="progress-bar"><div id="bar-water" class="progress-fill water"></div></div>
+          <div id="txt-water" class="progress-text">0 / 100oz</div>
+        </div>
+        <div class="water-buttons">
+          <button type="button" class="btn-small btn-water" data-oz="8">+8oz</button>
+          <button type="button" class="btn-small btn-water" data-oz="16">+16oz</button>
+          <button type="button" class="btn-small btn-water" data-oz="24">+24oz</button>
+          <button type="button" class="btn-small btn-del" id="btn-water-reset">Reset</button>
         </div>
       </div>
 
@@ -191,6 +221,7 @@
         <label>Daily protein target (g)<input type="number" id="s-protein-target" min="0" /></label>
         <label>Starting weight (lbs)<input type="number" id="s-starting-weight" min="0" step="0.1" /></label>
         <label>Goal weight (lbs)<input type="number" id="s-weight-goal" min="0" step="0.1" /></label>
+        <label>Daily water target (oz)<input type="number" id="s-water-target" min="0" /></label>
       </div>
       <div class="card">
         <div class="card-title">Alert Thresholds (per item)</div>
@@ -205,6 +236,15 @@
         </label>
         <input type="time" id="s-reminder-time" />
         <div id="reminder-status" class="muted"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Snack/Fruit Reminder</div>
+        <label class="checkbox-row">
+          <input type="checkbox" id="s-snack-reminder-enabled" />
+          Remind me if I haven't logged a fruit/snack by...
+        </label>
+        <input type="time" id="s-snack-reminder-time" />
+        <div id="snack-reminder-status" class="muted"></div>
       </div>
       <div class="card">
         <button id="btn-save-settings" class="btn btn-primary full-width">Save Settings</button>

@@ -2,25 +2,28 @@
 
 Phase 1 of the fitness tracker web app (per the build spec). It runs entirely in the browser — no backend, no build step. Your food log, weights, favorites, and photos are stored locally on whatever device/browser you use (localStorage + IndexedDB), so they stay on that device and don't sync anywhere else.
 
-The app lives in the `app/` folder.
+The app lives in the `docs/` folder (named that specifically so GitHub Pages — see below — can serve it with zero extra config).
 
-## Running it
+## Using it on your phone (recommended way to actually use it)
 
-Because the app uses ES modules, open it through a local web server rather than double-clicking `index.html`. From the `app/` folder:
+This needs HTTPS for the camera barcode scanner to work, so the easiest path is free hosting via **GitHub Pages**:
+
+1. On GitHub, open this repo → **Settings** → **Pages** (left sidebar).
+2. Under "Build and deployment" → Source, choose **Deploy from a branch**.
+3. Branch: pick `claude/fitness-tracker-build-spec-u0mdkz` (or `main`, once this is merged), folder: **/docs**. Click **Save**.
+4. Wait a minute or two, then refresh that Settings page — it'll show a live link like `https://ik-l.github.io/TUPSS/`. Open that link on your phone (bookmark it, or add it to your home screen from the browser's share menu so it feels like an app).
+
+Everything (logging, alerts, weight chart, favorites, streak) works the same as a local run — the only thing HTTPS unlocks is the camera scanner.
+
+## Previewing it on your computer first
+
+Because the app uses ES modules, open it through a local web server rather than double-clicking `index.html`. From the `docs/` folder:
 
 ```
 python3 -m http.server 8000
 ```
 
-Then visit `http://localhost:8000` in your browser.
-
-## Using it on your phone (for the barcode scanner)
-
-Phones block camera access on a page loaded over plain `http://` from another machine. To scan barcodes on your phone, either:
-- Deploy the `app/` folder as a static site (GitHub Pages, Netlify, Vercel — all free, no server code required), or
-- Serve it from `localhost` on the phone itself.
-
-Everything else in the app works fine without HTTPS — you'd just enter nutrition info manually instead of scanning.
+Then visit `http://localhost:8000` in your browser. The barcode scanner won't work here (no HTTPS), but everything else will — good for a quick look before setting up Pages.
 
 ## What's included (Phase 1, all 11 features from the spec)
 

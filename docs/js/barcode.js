@@ -16,8 +16,8 @@ async function startScanner(elementId, onDetected, onError) {
   stopScanner();
   scannerInstance = new window.Html5Qrcode(elementId, { verbose: false });
   const config = {
-    fps: 10,
-    qrbox: { width: 250, height: 150 },
+    fps: 15,
+    qrbox: { width: 280, height: 180 },
     formatsToSupport: window.Html5QrcodeSupportedFormats
       ? [
           window.Html5QrcodeSupportedFormats.EAN_13,
@@ -28,6 +28,12 @@ async function startScanner(elementId, onDetected, onError) {
           window.Html5QrcodeSupportedFormats.CODE_39,
         ]
       : undefined,
+    // Uses the phone's native camera-based barcode engine (Safari 16.4+,
+    // Chrome/Android) when available instead of the slower/less accurate
+    // pure-JS decoder — this is the same underlying tech native apps use.
+    experimentalFeatures: {
+      useBarCodeDetectorIfSupported: true,
+    },
   };
   try {
     await scannerInstance.start(

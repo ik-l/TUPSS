@@ -23,9 +23,11 @@ function drawMacroRing(totals) {
   const canvas = document.getElementById('macro-ring');
   const ctx = canvas.getContext('2d');
   const dpr = window.devicePixelRatio || 1;
-  const size = canvas.clientWidth || 160;
+  const size = parseInt(canvas.style.width, 10) || canvas.clientWidth || 160;
   canvas.width = size * dpr;
   canvas.height = size * dpr;
+  canvas.style.width = `${size}px`;
+  canvas.style.height = `${size}px`;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, size, size);
 

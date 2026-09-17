@@ -4,9 +4,11 @@ function drawChart(canvas, weights, goal) {
   const ctx = canvas.getContext('2d');
   const dpr = window.devicePixelRatio || 1;
   const cssWidth = canvas.clientWidth || 600;
-  const cssHeight = canvas.clientHeight || 260;
+  const cssHeight = 260;
   canvas.width = cssWidth * dpr;
   canvas.height = cssHeight * dpr;
+  canvas.style.width = `${cssWidth}px`;
+  canvas.style.height = `${cssHeight}px`;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, cssWidth, cssHeight);
 

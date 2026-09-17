@@ -158,6 +158,24 @@ input, select {
   border: 1px solid var(--warn-border);
 }
 
+.date-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.date-nav-label { text-align: center; flex: 1; }
+.date-nav-btn {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
+  color: var(--text);
+  cursor: pointer;
+}
+.date-nav-btn:disabled { opacity: 0.35; cursor: default; }
+
 #reader { width: 100%; margin: 10px 0; }
 
 .csv-box {

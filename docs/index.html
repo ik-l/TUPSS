@@ -17,8 +17,14 @@
     <!-- DASHBOARD -->
     <section id="view-dashboard" class="view active">
       <div class="card">
-        <div class="card-title">Today</div>
-        <div id="dash-date" class="muted"></div>
+        <div class="date-nav">
+          <button id="dash-prev-day" class="date-nav-btn" aria-label="Previous day">‹</button>
+          <div class="date-nav-label">
+            <div id="dash-date-label" class="card-title" style="margin-bottom:0;">Today</div>
+            <div id="dash-date" class="muted"></div>
+          </div>
+          <button id="dash-next-day" class="date-nav-btn" aria-label="Next day">›</button>
+        </div>
       </div>
 
       <div class="card">
@@ -58,7 +64,7 @@
       </div>
 
       <div class="card">
-        <div class="card-title">Meals Today</div>
+        <div class="card-title">Meals</div>
         <div id="dash-meals"></div>
       </div>
     </section>
@@ -151,8 +157,13 @@
       </div>
     </section>
 
-    <!-- WEIGHT -->
+    <!-- WEIGHT / PROGRESS -->
     <section id="view-weight" class="view">
+      <div class="card">
+        <div class="card-title">This Week</div>
+        <canvas id="trend-calories-chart" width="600" height="220"></canvas>
+        <div id="trend-stats" class="macro-grid" style="margin-top:10px;"></div>
+      </div>
       <div class="card">
         <div class="card-title">Log Weight</div>
         <form id="form-weight" class="two-col">
@@ -226,7 +237,7 @@
     <button class="tab active" data-view="dashboard">🏠<span>Dashboard</span></button>
     <button class="tab" data-view="log">➕<span>Log</span></button>
     <button class="tab" data-view="favorites">⭐<span>Favorites</span></button>
-    <button class="tab" data-view="weight">📈<span>Weight</span></button>
+    <button class="tab" data-view="weight">📈<span>Progress</span></button>
     <button class="tab" data-view="settings">⚙️<span>Settings</span></button>
   </nav>
 

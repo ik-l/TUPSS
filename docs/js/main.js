@@ -4,6 +4,7 @@ import { Favorites } from './favorites.js';
 import { Weight } from './weight.js';
 import { Settings } from './settings.js';
 import { Reminder } from './reminder.js';
+import { Trends } from './trends.js';
 
 function switchView(name) {
   document.querySelectorAll('.view').forEach((v) => v.classList.remove('active'));
@@ -13,7 +14,10 @@ function switchView(name) {
 
   if (name === 'dashboard') Dashboard.renderDashboard();
   if (name === 'favorites') Favorites.renderFavorites(() => Dashboard.updateStreakBadge());
-  if (name === 'weight') Weight.renderWeightView();
+  if (name === 'weight') {
+    Weight.renderWeightView();
+    Trends.renderTrends();
+  }
   if (name === 'settings') Settings.loadSettingsIntoForm();
 }
 

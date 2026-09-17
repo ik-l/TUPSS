@@ -3,6 +3,8 @@ import { Photos } from './photos.js';
 
 const MEAL_ORDER = ['breakfast', 'lunch', 'dinner', 'snack'];
 
+let viewDate = Store.todayStr();
+
 function pct(value, target) {
   if (!target) return 0;
   return Math.max(0, Math.min(100, (value / target) * 100));
@@ -13,16 +15,48 @@ function updateStreakBadge() {
   document.getElementById('streak-badge').textContent = `🔥 ${count}`;
 }
 
+function shiftDateStr(dateStr, days) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const dt = new Date(y, m - 1, d);
+  dt.setDate(dt.getDate() + days);
+  return Store.todayStr(dt);
+}
+
+function dateLabelFor(dateStr) {
+  const today = Store.todayStr();
+  if (dateStr === today) return 'Today';
+  if (dateStr === shiftDateStr(today, -1)) return 'Yesterday';
+  if (dateStr === shiftDateStr(today, 1)) return 'Tomorrow';
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+}
+
+function goToPrevDay() {
+  viewDate = shiftDateStr(viewDate, -1);
+  renderDashboard();
+}
+
+function goToNextDay() {
+  const today = Store.todayStr();
+  if (viewDate >= today) return; // never navigate past today
+  viewDate = shiftDateStr(viewDate, 1);
+  renderDashboard();
+}
+
 async function renderDashboard() {
   const settings = Store.getSettings();
   const today = Store.todayStr();
-  document.getElementById('dash-date').textContent = new Date().toLocaleDateString(undefined, {
+
+  document.getElementById('dash-date-label').textContent = dateLabelFor(viewDate);
+  const [y, m, d] = viewDate.split('-').map(Number);
+  document.getElementById('dash-date').textContent = new Date(y, m - 1, d).toLocaleDateString(undefined, {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
   });
+  document.getElementById('dash-next-day').disabled = viewDate >= today;
 
-  const entries = Store.getEntriesForDate(today);
+  const entries = Store.getEntriesForDate(viewDate);
   const totals = Store.sumEntries(entries);
 
   const calPct = pct(totals.calories, settings.calorieTarget);
@@ -41,7 +75,7 @@ async function renderDashboard() {
   document.getElementById('txt-sodium').textContent = `${Math.round(totals.sodium)}mg`;
   document.getElementById('txt-sugar').textContent = `${Math.round(totals.sugar * 10) / 10}g`;
 
-  const extras = Store.getDailyExtras(today);
+  const extras = Store.getDailyExtras(viewDate);
   document.getElementById('input-steps').value = extras.steps ?? '';
   document.getElementById('input-standing').value = extras.standingMinutes ?? '';
 
@@ -79,7 +113,7 @@ async function renderMeals(entries, settings) {
   container.innerHTML = '';
 
   if (entries.length === 0) {
-    container.innerHTML = '<div class="muted">Nothing logged yet today.</div>';
+    container.innerHTML = '<div class="muted">Nothing logged for this day.</div>';
     return;
   }
 
@@ -150,13 +184,14 @@ function escapeHtml(str) {
 }
 
 function wireDashboardInputs() {
-  const today = Store.todayStr();
   document.getElementById('input-steps').addEventListener('change', (e) => {
-    Store.saveDailyExtras(today, { steps: e.target.value ? Number(e.target.value) : null });
+    Store.saveDailyExtras(viewDate, { steps: e.target.value ? Number(e.target.value) : null });
   });
   document.getElementById('input-standing').addEventListener('change', (e) => {
-    Store.saveDailyExtras(today, { standingMinutes: e.target.value ? Number(e.target.value) : null });
+    Store.saveDailyExtras(viewDate, { standingMinutes: e.target.value ? Number(e.target.value) : null });
   });
+  document.getElementById('dash-prev-day').addEventListener('click', goToPrevDay);
+  document.getElementById('dash-next-day').addEventListener('click', goToNextDay);
 }
 
 export const Dashboard = { renderDashboard, wireDashboardInputs, updateStreakBadge };

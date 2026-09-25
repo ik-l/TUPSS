@@ -13,7 +13,7 @@ const KEYS = {
 
 const DEFAULT_SETTINGS = {
   calorieTarget: 1900,
-  proteinTarget: 150,
+  proteinTarget: 195,
   sodiumThreshold: 800, // mg, per item
   sugarThreshold: 25, // g, per item
   startingWeight: 251,
@@ -25,6 +25,9 @@ const DEFAULT_SETTINGS = {
   snackReminderEnabled: false,
   snackReminderHour: 15,
   snackReminderMinute: 0,
+  earlyCheckinEnabled: true,
+  earlyCheckinHour: 11,
+  earlyCheckinMinute: 0,
 };
 
 function readJSON(key, fallback) {
@@ -234,7 +237,7 @@ function deleteFavorite(id) {
 
 // ---------- Reminder state ----------
 function getReminderState() {
-  return { lastShownDate: null, lastSnackShownDate: null, ...readJSON(KEYS.reminder, {}) };
+  return { lastShownDate: null, lastSnackShownDate: null, lastEarlyCheckinShownDate: null, ...readJSON(KEYS.reminder, {}) };
 }
 
 function saveReminderState(partial) {

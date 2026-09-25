@@ -65,11 +65,36 @@ function maybeFireSnackReminder() {
   Store.saveReminderState({ lastSnackShownDate: today });
 }
 
+function maybeFireEarlyCheckin() {
+  const settings = Store.getSettings();
+  if (!settings.earlyCheckinEnabled) return;
+
+  const now = new Date();
+  const target = new Date(now);
+  target.setHours(settings.earlyCheckinHour, settings.earlyCheckinMinute, 0, 0);
+  if (now < target) return;
+
+  const today = Store.todayStr();
+  const reminderState = Store.getReminderState();
+  if (reminderState.lastEarlyCheckinShownDate === today) return;
+
+  const hasEatenToday = Store.getEntriesForDate(today).length > 0;
+  if (hasEatenToday) {
+    Store.saveReminderState({ lastEarlyCheckinShownDate: today });
+    return;
+  }
+
+  sendReminder("Nothing logged yet this morning — eating something now beats skipping to one big dinner.");
+  Store.saveReminderState({ lastEarlyCheckinShownDate: today });
+}
+
 function startReminderLoop() {
   if (intervalId) clearInterval(intervalId);
+  maybeFireEarlyCheckin();
   maybeFireReminder();
   maybeFireSnackReminder();
   intervalId = setInterval(() => {
+    maybeFireEarlyCheckin();
     maybeFireReminder();
     maybeFireSnackReminder();
   }, 60 * 1000);

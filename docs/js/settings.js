@@ -14,7 +14,8 @@ const DEFAULT_NUTRITION_CSV = `Date,Meal,Time,Calories,Fat (g),Saturated Fat,Pol
 2026-09-16,Lunch,1:00 PM,10.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,2.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,`;
 
 const DEFAULT_MEASUREMENT_CSV = `Date,Weight
-2026-09-16,250.0`;
+2026-09-16,250.0
+2026-09-24,245`;
 
 const DEFAULT_EXERCISE_CSV = `Date,Exercise,Type,Exercise Calories,Exercise Minutes,Sets,Reps Per Set,Pounds,Steps,Note
 2026-09-16,MFP iOS calorie adjustment,Cardio,14.0,1,,,,1829,`;
@@ -39,6 +40,12 @@ function loadSettingsIntoForm() {
     s.snackReminderMinute
   ).padStart(2, '0')}`;
   updateSnackReminderStatus(s);
+
+  document.getElementById('s-early-checkin-enabled').checked = s.earlyCheckinEnabled;
+  document.getElementById('s-early-checkin-time').value = `${String(s.earlyCheckinHour).padStart(2, '0')}:${String(
+    s.earlyCheckinMinute
+  ).padStart(2, '0')}`;
+  updateEarlyCheckinStatus(s);
 
   const nBox = document.getElementById('import-nutrition-csv');
   const mBox = document.getElementById('import-measurement-csv');
@@ -71,6 +78,13 @@ function updateSnackReminderStatus(s) {
     : 'Reminder is off.';
 }
 
+function updateEarlyCheckinStatus(s) {
+  const el = document.getElementById('early-checkin-status');
+  el.textContent = s.earlyCheckinEnabled
+    ? "Reminds you if nothing's logged yet by then."
+    : 'Reminder is off.';
+}
+
 function wireSettingsForm(onSaved) {
   document.getElementById('btn-save-settings').addEventListener('click', async () => {
     const timeVal = document.getElementById('s-reminder-time').value || '13:00';
@@ -80,6 +94,10 @@ function wireSettingsForm(onSaved) {
     const snackTimeVal = document.getElementById('s-snack-reminder-time').value || '15:00';
     const [shh, smm] = snackTimeVal.split(':').map(Number);
     const snackReminderEnabled = document.getElementById('s-snack-reminder-enabled').checked;
+
+    const earlyTimeVal = document.getElementById('s-early-checkin-time').value || '11:00';
+    const [ehh, emm] = earlyTimeVal.split(':').map(Number);
+    const earlyCheckinEnabled = document.getElementById('s-early-checkin-enabled').checked;
 
     const next = Store.saveSettings({
       calorieTarget: Number(document.getElementById('s-calorie-target').value) || 1900,
@@ -95,13 +113,17 @@ function wireSettingsForm(onSaved) {
       snackReminderEnabled,
       snackReminderHour: shh,
       snackReminderMinute: smm,
+      earlyCheckinEnabled,
+      earlyCheckinHour: ehh,
+      earlyCheckinMinute: emm,
     });
 
-    if (reminderEnabled || snackReminderEnabled) {
+    if (reminderEnabled || snackReminderEnabled || earlyCheckinEnabled) {
       await Reminder.requestPermissionIfNeeded();
     }
     updateReminderStatus(next);
     updateSnackReminderStatus(next);
+    updateEarlyCheckinStatus(next);
     Reminder.startReminderLoop();
     onSaved && onSaved();
   });

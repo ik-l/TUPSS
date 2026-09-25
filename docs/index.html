@@ -270,6 +270,16 @@
         <label>Added sugar (g)<input type="number" id="s-sugar-threshold" min="0" /></label>
       </div>
       <div class="card">
+        <div class="card-title">Early Check-in</div>
+        <p class="muted">For catching a whole morning skipped before you get to one big dinner.</p>
+        <label class="checkbox-row">
+          <input type="checkbox" id="s-early-checkin-enabled" />
+          Remind me if nothing's logged yet by...
+        </label>
+        <input type="time" id="s-early-checkin-time" />
+        <div id="early-checkin-status" class="muted"></div>
+      </div>
+      <div class="card">
         <div class="card-title">Meal Reminder</div>
         <label class="checkbox-row">
           <input type="checkbox" id="s-reminder-enabled" />
